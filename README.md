@@ -1,7 +1,7 @@
 
 <h1 align="center">
   <br>
-  <img src=".github/logo.png" alt="Cloudra" width="200">
+  <img src=".github/logo.svg" alt="Cloudra" width="200">
   <br>
   Cloudra
   <br>
@@ -51,6 +51,9 @@ _________ .__                   .___
 | 📥 | **Download** | Pull files via `cloudra download <file>`. |
 | 📋 | **List** | See remote files with `cloudra list`. |
 | 🔌 | **Pluggable server** | Point the CLI at any running Cloudra server. |
+| 💾 | **Persistent config** | Server URL saved in `~/.cloudra/config`. |
+| 📦 | **Directory upload** | Upload folders via `cloudra upload -r <dir>` — stored as `.zip` on server. |
+| 📂 | **Directory download** | Download folders as `.zip` or extract locally with `cloudra download [--zip] <dir>`. |
 
 ---
 
@@ -68,11 +71,20 @@ go run ./server/main.go &
 # Upload a file
 cloudra upload myfile.jpg
 
+# Upload a directory (recursive — zips & extracts)
+cloudra upload -r myfolder/
+
 # List remote files
 cloudra list
 
 # Download a file
 cloudra download myfile.jpg
+
+# Download a directory (as a folder)
+cloudra download myfolder/
+
+# Download a directory (as .zip)
+cloudra download --zip myfolder/
 ```
 
 ---
@@ -91,18 +103,29 @@ go run ./server/main.go
 ### CLI Client
 
 ```bash
-# Set a custom server URL (default: http://localhost:8080)
+# Set a custom server URL (saved to ~/.cloudra/config)
 cloudra server http://192.168.1.100:8080
 
-# Upload
+# Upload a file
 cloudra upload photo.jpg
 
-# Download
+# Upload a directory (zipped & extracted on server)
+cloudra upload -r documents/
+
+# Download a file
 cloudra download document.pdf
+
+# Download a directory (extracted)
+cloudra download documents/
+
+# Download a directory (as .zip)
+cloudra download --zip documents/
 
 # List remote files
 cloudra list
 ```
+
+> Server URL is persisted in `~/.cloudra/config` — set it once, use it forever.
 
 ---
 
@@ -151,7 +174,7 @@ cloudra/
 │   ├── client/
 │   │   └── client.go           # HTTP client (upload / download / list)
 │   └── config/
-│       └── config.go           # Server URL configuration
+│       └── config.go           # Config file (~/.cloudra/config)
 ├── server/
 │   └── main.go                 # HTTP server (3 routes, local storage)
 ├── go.mod                      # Go module definition
@@ -182,7 +205,8 @@ Binaries land in `./bin/`. No external dependencies required.
 - [ ] TLS support
 - [ ] File-size limits & validation
 - [ ] Authentication tokens
-- [ ] Directory upload (recursive)
+- [x] Directory upload (recursive — zip-based)
+- [x] Directory download (as folder or .zip)
 - [ ] Streaming progress bars
 - [ ] Docker image
 - [ ] GitHub Actions CI

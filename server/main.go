@@ -14,7 +14,6 @@ func ensureStorage() {
 	os.MkdirAll(storageDir, os.ModePerm)
 }
 
-// Upload
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "only POST allowed", 405)
@@ -28,7 +27,8 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	dstPath := filepath.Join(storageDir, header.Filename)
+	name := header.Filename
+	dstPath := filepath.Join(storageDir, name)
 
 	dst, err := os.Create(dstPath)
 	if err != nil {
@@ -38,11 +38,9 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	defer dst.Close()
 
 	io.Copy(dst, file)
-
-	fmt.Fprintln(w, "uploaded:", header.Filename)
+	fmt.Fprintln(w, "uploaded:", name)
 }
 
-// Download
 func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	if name == "" {
@@ -52,19 +50,28 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 
 	filePath := filepath.Join(storageDir, name)
 
+	if _, err := os.Stat(filePath); err != nil {
+		zipPath := filePath + ".zip"
+		if _, err := os.Stat(zipPath); err == nil {
+			http.ServeFile(w, r, zipPath)
+			return
+		}
+		http.Error(w, "not found", 404)
+		return
+	}
+
 	http.ServeFile(w, r, filePath)
 }
 
-// List
 func listHandler(w http.ResponseWriter, r *http.Request) {
-	files, err := os.ReadDir(storageDir)
+	entries, err := os.ReadDir(storageDir)
 	if err != nil {
 		http.Error(w, "cannot read storage", 500)
 		return
 	}
 
-	for _, f := range files {
-		fmt.Fprintln(w, f.Name())
+	for _, e := range entries {
+		fmt.Fprintln(w, e.Name())
 	}
 }
 

@@ -9,12 +9,13 @@ import (
 )
 
 func main() {
+	config.Load()
 
 	if len(os.Args) < 2 {
 		fmt.Println("usage:")
 		fmt.Println("  cloudra server <url>")
-		fmt.Println("  cloudra upload <file>")
-		fmt.Println("  cloudra download <file>")
+		fmt.Println("  cloudra upload [-r] <file|dir>")
+		fmt.Println("  cloudra download [--zip] <file|dir>")
 		fmt.Println("  cloudra list")
 		return
 	}
@@ -23,38 +24,64 @@ func main() {
 
 	switch cmd {
 
-	// server set
 	case "server":
 		if len(os.Args) < 3 {
 			fmt.Println("missing server url")
 			return
 		}
-		config.SetServerURL(os.Args[2])
-		fmt.Println("server set:", os.Args[2])
-
-	// upload
-	case "upload":
-		if len(os.Args) < 3 {
-			fmt.Println("missing file")
+		err := config.SetServerURL(os.Args[2])
+		if err != nil {
+			fmt.Println("failed to save config:", err)
 			return
 		}
-		err := client.Upload(os.Args[2])
+		fmt.Println("server set:", os.Args[2])
+
+	case "upload":
+		if len(os.Args) < 3 {
+			fmt.Println("missing file or directory")
+			return
+		}
+
+		recursive := false
+		path := os.Args[2]
+
+		if path == "-r" {
+			recursive = true
+			if len(os.Args) < 4 {
+				fmt.Println("missing directory")
+				return
+			}
+			path = os.Args[3]
+		}
+
+		err := client.Upload(path, recursive)
 		if err != nil {
 			fmt.Println("upload error:", err)
 		}
 
-	// download
 	case "download":
 		if len(os.Args) < 3 {
-			fmt.Println("missing file")
+			fmt.Println("missing file or directory")
 			return
 		}
-		err := client.Download(os.Args[2])
+
+		zipMode := false
+		path := os.Args[2]
+
+		if path == "--zip" {
+			zipMode = true
+			if len(os.Args) < 4 {
+				fmt.Println("missing file or directory")
+				return
+			}
+			path = os.Args[3]
+		}
+
+		err := client.Download(path, zipMode)
 		if err != nil {
 			fmt.Println("download error:", err)
 		}
 
-	// list
 	case "list":
 		err := client.List()
 		if err != nil {
